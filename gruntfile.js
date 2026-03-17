@@ -16,7 +16,6 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-babel');
   grunt.loadNpmTasks('grunt-browserify');
   grunt.loadNpmTasks('grunt-terser');
-  grunt.loadNpmTasks('grunt-contrib-jasmine');
   grunt.loadNpmTasks('grunt-contrib-copy');
   grunt.loadNpmTasks('grunt-exorcise');
 
@@ -30,7 +29,7 @@ module.exports = function(grunt) {
         files: [
           {
             expand: true,
-            src: ['./lib/**/*.js', './spec/browser/*.js'],
+            src: ['./lib/**/*.js'],
             dest: './build/',
           },
         ],
@@ -59,22 +58,29 @@ module.exports = function(grunt) {
         },
       },
       bare: {
-        // keep the original source for source maps
-        src: ['./lib/dx-exceljs-fork.bare.js'],
+        // Entries are specified explicitly via browserifyOptions to work around
+        // glob v13 + minimatch v10 treating backslashes as escape chars on Windows,
+        // which causes grunt.file.expand to return empty results.
+        options: {
+          browserifyOptions: {
+            debug: true,
+            standalone: 'ExcelJS',
+            entries: ['./lib/dx-exceljs-fork.bare.js'],
+          },
+        },
+        src: [],
         dest: './dist/dx-exceljs-fork.bare.js',
       },
       bundle: {
-        // keep the original source for source maps
-        src: ['./lib/dx-exceljs-fork.browser.js'],
-        dest: './dist/dx-exceljs-fork.js',
-      },
-      spec: {
         options: {
-          transform: null,
-          browserifyOptions: null,
+          browserifyOptions: {
+            debug: true,
+            standalone: 'ExcelJS',
+            entries: ['./lib/dx-exceljs-fork.browser.js'],
+          },
         },
-        src: ['./build/spec/browser/exceljs.spec.js'],
-        dest: './build/web/exceljs.spec.js',
+        src: [],
+        dest: './dist/dx-exceljs-fork.js',
       },
     },
 
@@ -133,18 +139,6 @@ module.exports = function(grunt) {
       },
     },
 
-    jasmine: {
-      options: {
-        version: '5.9.0',
-        noSandbox: true,
-      },
-      dev: {
-        src: ['./dist/dx-exceljs-fork.js'],
-        options: {
-          specs: './build/web/exceljs.spec.js',
-        },
-      },
-    },
   });
 
   grunt.registerTask('build', ['babel:dist', 'browserify', 'terser', 'exorcise', 'copy']);
